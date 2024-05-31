@@ -10,7 +10,7 @@ const {
 //** ======================== Get all users ========================
 const getAllUsers = async (req, res) => {
   // console.log(req.user) //check if I am getting req.user from authentication.js or not
-  const user = await User.find({ role: "admin" }).select("-password")
+  const user = await User.find({ role: "user" }).select("-password")
   res.status(StatusCodes.OK).json({ total_users: user.length, user })
 }
 
