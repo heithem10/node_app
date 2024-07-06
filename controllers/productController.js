@@ -5,7 +5,6 @@ const path = require("path")
 
 // ** ===================  CREATE PRODUCT  ===================
 const createProduct = async (req, res) => {
-  req.body.user = req.user.userId
   const product = await Product.create(req.body)
   res.status(StatusCodes.CREATED).json({ product })
 }
@@ -23,7 +22,7 @@ const getSingleProduct = async (req, res) => {
   if (!product) {
     throw new CustomError.BadRequestError(`No product with the id ${productId}`)
   }
-  res.status(StatusCodes.OK).json({ product })
+  res.status(StatusCodes.OK).json( product )
 }
 
 // ** ===================  UPDATE PRODUCT  ===================

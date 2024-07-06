@@ -5,28 +5,28 @@ const { StatusCodes } = require("http-status-codes")
 const { checkPermissions } = require("../utils")
 
 // ** ===================  CREATE REVIEW  ===================
-const createReview = async (req, res) => {
-  const { product: productId } = req.body
+const createReview = async (req, res, next) => {
+  try {
+    const { rating, comment } = req.body;
+    const { productId } = req.params; // Assuming productId is passed in params or body
+    const userId = req.user.userId; 
+    console.log(userId)// Assuming userId is retrieved from authenticated user
+    if (!userId) {
+      throw new CustomError.UnauthorizedError('User not authenticated');
+    }
+    const review = await Review.create({
+      title:"Review",
+      rating,
+      comment,
+      user: userId,
+      product: productId,
+    });
 
-  // check if product is valid or not
-  const isValidProduct = await Product.findOne({ _id: productId })
-  if (!isValidProduct) {
-    throw new CustomError.NotFoundError(`No product with id: ${productId}`)
+    res.status(StatusCodes.CREATED).json({ review });
+  } catch (error) {
+    next(error);
   }
-  // check if user is already submitted the review for this product or not
-  const alreadySubmittedReview = await Review.findOne({
-    product: productId,
-    user: req.user.userId,
-  })
-  if (alreadySubmittedReview) {
-    throw new CustomError.BadRequestError(
-      "Already submitted review for this product"
-    )
-  }
-  req.body.user = req.user.userId
-  const review = await Review.create(req.body)
-  res.status(StatusCodes.CREATED).json({ review })
-}
+};
 
 // ** ===================  GET ALL REVIEWS  ===================
 const getAllReviews = async (req, res) => {
@@ -47,25 +47,27 @@ const getSingleReview = async (req, res) => {
   res.status(StatusCodes.OK).json({ review })
 }
 
-// ** ===================  UPDATE REVIEW  ===================
-const updateReview = async (req, res) => {
-  const { id: reviewId } = req.params
-  const { rating, title, comment } = req.body
-  // Check if review exists or not
-  const review = await Review.findOne({ _id: reviewId })
-  if (!review) {
-    throw new CustomError.NotFoundError(`No review with the the id ${reviewId}`)
+// Update an existing review
+const updateReview = async (req, res, next) => {
+  try {
+    const { reviewId } = req.params; // Assuming reviewId is passed in params
+    const { rating, comment } = req.body;
+
+    const review = await Review.findByIdAndUpdate(
+      reviewId,
+      { rating, comment },
+      { new: true, runValidators: true }
+    );
+
+    if (!review) {
+      return next(new CustomError.NotFoundError(`Review with id ${reviewId} not found`));
+    }
+
+    res.status(StatusCodes.OK).json({ review });
+  } catch (error) {
+    next(error);
   }
-  checkPermissions(req.user, review.user)
-
-  review.rating = rating
-  review.title = title
-  review.comment = comment
-
-  await review.save()
-  res.status(StatusCodes.OK).json({ msg: "Success! Review has been updated" })
-}
-
+};
 // ** ===================  DELETE REVIEW  ===================
 const deleteReview = async (req, res) => {
   const { id: reviewId } = req.params
@@ -81,7 +83,7 @@ const deleteReview = async (req, res) => {
 // ** =================== GET SINGLE PRODUCT REVIEW  ===================
 const getSingleProductReviews = async (req, res) => {
   const { id: productId } = req.params
-  const reviews = await Review.find({ product: productId })
+  const reviews = await Review.find({ product: productId }).populate('user', 'name');
   res.status(StatusCodes.OK).json({ total_reviews: reviews.length, reviews })
 }
 

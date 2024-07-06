@@ -11,7 +11,7 @@ const {
 
 const { authenticateUser } = require("../middleware/authentication")
 
-router.route("/").post(authenticateUser, createReview).get(getAllReviews)
+router.route('/:productId').post(authenticateUser, createReview).get(getAllReviews)
 
 router
   .route("/:id")
