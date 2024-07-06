@@ -31,12 +31,6 @@ const ProductSchema = new mongoose.Schema(
       required: [true, "Please provide category"],
       enum: ["smartphone", "laptop", "hardware"],
     },
-
-    user: {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 )
